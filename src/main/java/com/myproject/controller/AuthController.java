@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.myproject.model.User;
-
+import com.myproject.dto.PasswordChangeDTO;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -29,5 +29,16 @@ public class AuthController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody PasswordChangeDTO dto) {
+        try {
+            authService.changePassword(dto);
+            return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
 
 }
