@@ -25,7 +25,7 @@ public class User {
     private String email;
 
     @Column(length = 255, nullable = false)
-    private String passwordHash;
+    private String password;
 
     @Column(length = 20)
     private String phoneNumber;
@@ -35,9 +35,6 @@ public class User {
 
     @Column(length = 50)
     private String city;
-
-    @Column(length = 50)
-    private String state;
 
     @Column(length = 20)
     private String postalCode;
