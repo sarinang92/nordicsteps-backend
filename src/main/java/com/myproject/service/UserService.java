@@ -110,8 +110,6 @@ public class UserService {
         user.setCity(userDTO.getCity());
         user.setPostalCode(userDTO.getPostalCode());
         user.setCountry(userDTO.getCountry());
-        user.setEmailVerified(userDTO.getEmailVerified());
-        user.setRole(userDTO.getRole());
 
         User updatedUser = userRepository.save(user);
         return userMapper.toUserDetailDTO(updatedUser);
