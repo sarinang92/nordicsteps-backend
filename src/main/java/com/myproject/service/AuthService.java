@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.myproject.dto.PasswordChangeDTO;
-
+import com.myproject.dto.UserLoginResponseDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -16,18 +16,15 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public User login(String email, String rawPassword) {
-        // 1. Find user by email
+    public UserLoginResponseDTO login(String email, String rawPassword) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Invalid email or password"));
 
-        // 2. Validate password
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
             throw new IllegalArgumentException("Invalid email or password");
         }
 
-        // 3. Return full user object
-        return user;
+        return new UserLoginResponseDTO(user.getUserId(), user.getEmail(), "Login successful");
     }
 
     public void changePassword(PasswordChangeDTO dto) {

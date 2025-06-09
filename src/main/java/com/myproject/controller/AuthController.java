@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.myproject.model.User;
 import com.myproject.dto.PasswordChangeDTO;
+import com.myproject.dto.UserLoginResponseDTO;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -19,14 +20,8 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequestDTO request) {
-        User user = authService.login(request.getEmail(), request.getPassword());
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("email", user.getEmail());
-        response.put("id", user.getUserId());
-        response.put("message", "Login successful");
-
+    public ResponseEntity<UserLoginResponseDTO> login(@RequestBody LoginRequestDTO request) {
+        UserLoginResponseDTO response = authService.login(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(response);
     }
 
