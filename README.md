@@ -41,6 +41,11 @@ spring.datasource.url=jdbc:postgresql://localhost:5432/nordicsteps
 spring.datasource.username=Case
 spring.datasource.password=Esac
 ```
+4. If passwords are stored in plain text, and you want to hash them the first time for testing purposes:
+Go to `src/main/resources/application.properties` and set:
+```properties
+app.password-migration.enabled=true
+```
 
 4. Build the project:
 ```bash
