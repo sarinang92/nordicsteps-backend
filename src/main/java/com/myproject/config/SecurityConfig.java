@@ -22,7 +22,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf().disable() // Disable CSRF for development/testing
+                .csrf().disable() // Disable CSRF for development/testing (do NOT use in production)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",          // Allow login/register endpoints
@@ -31,7 +31,8 @@ public class SecurityConfig {
                                 "/api/orders/**",
                                 "/api/v1/cart/**",
                                 "/api/v1/products/**",
-                                "/v3/api-docs/**"        // Allow OpenAPI docs
+                                "/v3/api-docs/**"
+
                         ).permitAll()
                         .anyRequest().authenticated() // 🔒 Any other route requires login
                 )
@@ -47,7 +48,7 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173") // 🔓 Allow Vite dev server
+                        .allowedOriginPatterns("http://localhost:*")
                         .allowedMethods("*")
                         .allowedHeaders("*");
             }
