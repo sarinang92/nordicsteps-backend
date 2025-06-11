@@ -35,7 +35,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf.disable())
-                .formLogin(Customizer.withDefaults()); 
+                .formLogin(Customizer.withDefaults());
 
         return http.build();
     }
