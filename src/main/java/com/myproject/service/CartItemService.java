@@ -1,20 +1,25 @@
-// src/main/java/com/myproject/service/CartItemService.java
 package com.myproject.service;
 
 import com.myproject.dto.CartItemRequestDTO;
 import com.myproject.dto.CartItemResponseDTO;
 import com.myproject.mapper.CartItemMapper;
-import com.myproject.model.CartItems; // Ensure this is your actual CartItem entity class name
-import com.myproject.model.Products; // Assuming your Product entity is named Products
+import com.myproject.model.Cart; // Import the Cart entity
+import com.myproject.model.CartItems;
+import com.myproject.model.Products; // Use Products (plural)
+import com.myproject.model.User; // Import User entity if managing cart per user directly
 import com.myproject.repository.CartItemRepository;
-import com.myproject.repository.ProductRepository; // New import
+import com.myproject.repository.CartRepository; // Assuming you have this repository
+import com.myproject.repository.ProductRepository; // Still named ProductRepository, consider renaming to ProductsRepository
+import com.myproject.repository.UserRepository; // Assuming you have this repository for user management
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,32 +29,77 @@ public class CartItemService {
 
     private final CartItemRepository cartItemRepository;
     private final CartItemMapper cartItemMapper;
-    private final ProductRepository productRepository; // Inject ProductRepository
+    private final ProductRepository productRepository; // Using your provided ProductRepository (should be for Products entity)
+    private final CartRepository cartRepository; // Inject CartRepository
+    private final UserRepository userRepository; // Inject UserRepository for user-specific cart management
 
-    // Add item to cart and return CartItemResponseDTO
-    public CartItemResponseDTO addItemToCart(CartItemRequestDTO cartItemRequestDTO) {
-        // Fetch the Product entity
+    /**
+     * Retrieves the active cart for a given user ID, or creates a new one if it doesn't exist.
+     * This method assumes user authentication is handled elsewhere and provides the userId.
+     * In a production application, you might get the userId from Spring Security context.
+     *
+     * @param userId The ID of the user.
+     * @return The active Cart for the user.
+     * @throws EntityNotFoundException if the user does not exist when trying to create a new cart.
+     */
+    private Cart getOrCreateActiveCart(Long userId) {
+        // Find an active cart for the user
+        Optional<Cart> existingCart = cartRepository.findByUser_UserIdAndStatus(userId, "active");
+
+        if (existingCart.isPresent()) {
+            return existingCart.get();
+        } else {
+            // Fetch the User entity
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
+
+            // Create a new cart for the user
+            Cart newCart = new Cart();
+            newCart.setUser(user);
+            newCart.setStatus("active");
+            newCart.setCreatedAt(LocalDateTime.now());
+            return cartRepository.save(newCart);
+        }
+    }
+
+    /**
+     * Adds a product to the user's cart or updates its quantity if it already exists.
+     * Handles fetching product, finding/creating cart, and calculating total price.
+     *
+     * @param userId The ID of the user whose cart is being modified.
+     * @param cartItemRequestDTO DTO containing product ID, quantity, and size.
+     * @return CartItemResponseDTO representing the added or updated cart item.
+     * @throws EntityNotFoundException if the product or user is not found.
+     * @throws IllegalArgumentException if quantity is less than 1.
+     */
+    public CartItemResponseDTO addItemToCart(Long userId, CartItemRequestDTO cartItemRequestDTO) {
+        if (cartItemRequestDTO.getQuantity() < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1.");
+        }
+
+        // 1. Get or Create Cart for the user
+        Cart userCart = getOrCreateActiveCart(userId);
+
+        // 2. Fetch the Product
         Products product = productRepository.findById(cartItemRequestDTO.getProductId())
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with ID: " + cartItemRequestDTO.getProductId()));
 
-        // Check if a cart item with the same product and size already exists for the current user's cart
-        // (Assuming you have a way to determine the current user's cart or a default cart logic)
-        // For simplicity, let's assume we always create a new one or update if found based on product and size
-        // If you have a user/cart context, you'd find an existing item here.
-        CartItems existingCartItem = cartItemRepository.findByProductAndSize(product, cartItemRequestDTO.getSize()) // You'd need to add this method to your CartItemRepository
-                .orElse(null);
+        // 3. Check if the item (same product and size) already exists in this specific cart
+        Optional<CartItems> existingCartItem = cartItemRepository.findByCart_CartIdAndProduct_ProductIdAndSize(
+                userCart.getCartId(), product.getProductId(), cartItemRequestDTO.getSize());
 
         CartItems cartItem;
-        if (existingCartItem != null) {
-            // Update quantity
-            existingCartItem.setQuantity(existingCartItem.getQuantity() + cartItemRequestDTO.getQuantity());
-            cartItem = existingCartItem;
+        if (existingCartItem.isPresent()) {
+            // Update quantity and total price
+            cartItem = existingCartItem.get();
+            cartItem.setQuantity(cartItem.getQuantity() + cartItemRequestDTO.getQuantity());
         } else {
-            // Create a new cart item
-            cartItem = cartItemMapper.toCartItem(cartItemRequestDTO); // Maps quantity and size
-            cartItem.setProduct(product); // Set the fetched Product entity
-            // Assume you also have a way to link this to a Cart entity (e.g., based on current user's active cart)
-            // cartItem.setCart(currentUserCart);
+            // Create new cart item
+            cartItem = new CartItems(); // Manually instantiate to set relationships
+            cartItem.setCart(userCart);
+            cartItem.setProduct(product);
+            cartItem.setQuantity(cartItemRequestDTO.getQuantity());
+            cartItem.setSize(cartItemRequestDTO.getSize());
         }
 
         // Calculate total price for the item
@@ -60,64 +110,82 @@ public class CartItemService {
         return cartItemMapper.toCartItemResponseDTO(savedCartItem);
     }
 
-    // Get all cart items and map to DTOs
-    public List<CartItemResponseDTO> getAllCartItems() {
-        List<CartItems> cartItems = cartItemRepository.findAll();
+    /**
+     * Retrieves all cart items for a specific user's active cart.
+     *
+     * @param userId The ID of the user.
+     * @return A list of CartItemResponseDTOs.
+     * @throws EntityNotFoundException if the user's cart is not found.
+     */
+    public List<CartItemResponseDTO> getAllCartItems(Long userId) {
+        Cart userCart = getOrCreateActiveCart(userId);
+        List<CartItems> cartItems = cartItemRepository.findByCart_CartId(userCart.getCartId());
         return cartItems.stream()
                 .map(cartItemMapper::toCartItemResponseDTO)
                 .collect(Collectors.toList());
     }
 
-    // Get cart item by ID and map to DTO
+    /**
+     * Retrieves a single cart item by its ID.
+     *
+     * @param id The ID of the cart item.
+     * @return CartItemResponseDTO if found.
+     * @throws EntityNotFoundException if the cart item is not found.
+     */
     public CartItemResponseDTO getCartItemById(Long id) {
         CartItems cartItem = cartItemRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cart item not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Cart item not found with ID: " + id));
         return cartItemMapper.toCartItemResponseDTO(cartItem);
     }
 
-    // Update cart item quantity and return updated CartItemResponseDTO
-    // This method now handles quantity AND size update if needed, but primarily quantity
-    public CartItemResponseDTO updateCartItem(Long id, CartItemRequestDTO cartItemRequestDTO) {
-        CartItems cartItem = cartItemRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cart item not found"));
-
-        // Only update quantity and size from the request DTO
-        // The mapper's update method can handle this
-        cartItemMapper.updateCartItemFromDto(cartItemRequestDTO, cartItem);
-
-        // Fetch the product again in case the product ID changed (though typically not for update quantity)
-        // Or ensure the product is already loaded via the initial cartItem fetch if it's eagerly loaded,
-        // or fetch if lazily loaded and accessed.
-        Products product = cartItem.getProduct();
-        if (product == null || !product.getProductId().equals(cartItemRequestDTO.getProductId())) {
-            // This case implies product ID in request DTO is different, implying a change of product for the item
-            // This might need a more complex logic, but for simple quantity/size update, productId should match.
-            // If productId can change during update, fetch new product.
-            product = productRepository.findById(cartItemRequestDTO.getProductId())
-                    .orElseThrow(() -> new EntityNotFoundException("Product not found with ID: " + cartItemRequestDTO.getProductId()));
-            cartItem.setProduct(product);
+    /**
+     * Updates the quantity of an existing cart item.
+     *
+     * @param cartItemId The ID of the cart item to update.
+     * @param quantity The new quantity for the item.
+     * @return CartItemResponseDTO representing the updated cart item.
+     * @throws EntityNotFoundException if the cart item is not found.
+     * @throws IllegalArgumentException if quantity is less than 1.
+     */
+    public CartItemResponseDTO updateCartItemQuantity(Long cartItemId, int quantity) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1.");
         }
 
+        CartItems cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new EntityNotFoundException("Cart item not found with ID: " + cartItemId));
 
-        // Recalculate total price
-        BigDecimal itemTotalPrice = product.getCurrentPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+        cartItem.setQuantity(quantity);
+        // Recalculate total price based on updated quantity and current product price
+        BigDecimal itemTotalPrice = cartItem.getProduct().getCurrentPrice().multiply(BigDecimal.valueOf(quantity));
         cartItem.setTotalPrice(itemTotalPrice);
 
         CartItems updatedCartItem = cartItemRepository.save(cartItem);
         return cartItemMapper.toCartItemResponseDTO(updatedCartItem);
     }
 
-
-    // Remove cart item by ID
+    /**
+     * Removes a single cart item from the cart by its ID.
+     *
+     * @param id The ID of the cart item to remove.
+     * @throws EntityNotFoundException if the cart item is not found.
+     */
     public void removeCartItem(Long id) {
         if (!cartItemRepository.existsById(id)) {
-            throw new EntityNotFoundException("Cart item not found");
+            throw new EntityNotFoundException("Cart item not found with ID: " + id);
         }
         cartItemRepository.deleteById(id);
     }
 
-    // Clear all cart items
-    public void clearCart() {
-        cartItemRepository.deleteAll();
+    /**
+     * Clears all items from a specific user's active cart.
+     *
+     * @param userId The ID of the user whose cart should be cleared.
+     * @throws EntityNotFoundException if the user's cart is not found.
+     */
+    public void clearCart(Long userId) {
+        Cart userCart = getOrCreateActiveCart(userId);
+        List<CartItems> itemsToClear = cartItemRepository.findByCart_CartId(userCart.getCartId());
+        cartItemRepository.deleteAll(itemsToClear);
     }
 }

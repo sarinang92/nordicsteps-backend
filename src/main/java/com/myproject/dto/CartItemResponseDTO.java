@@ -1,4 +1,3 @@
-// src/main/java/com/myproject/dto/CartItemResponseDTO.java
 package com.myproject.dto;
 
 import lombok.AllArgsConstructor;
