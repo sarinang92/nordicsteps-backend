@@ -1,13 +1,12 @@
-// src/main/java/com/myproject/service/ProductService.java
 package com.myproject.service;
 
 import com.myproject.dto.ProductBasicDTO;
 import com.myproject.dto.ProductDetailDTO;
 import com.myproject.mapper.ProductMapper;
-import com.myproject.model.Products; // Use 'Products' (plural)
-// Removed import com.myproject.model.Categories;
+import com.myproject.model.Products;
+import com.myproject.model.Categories; 
 import com.myproject.repository.ProductRepository;
-// Removed import com.myproject.repository.CategoryRepository;
+import com.myproject.repository.CategoryRepository; 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +20,7 @@ import java.util.List;
 public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
-    // Removed private final CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
 
     // Get all products (basic info)
     public List<ProductBasicDTO> getAllProductsBasic() {
@@ -38,8 +37,19 @@ public class ProductService {
 
     // Create a new product
     public ProductDetailDTO createProduct(ProductDetailDTO productDTO) {
-        Products product = productMapper.toProduct(productDTO); // Use mapper for conversion
-        // Removed category setting logic for simplification
+        Products product = productMapper.toProduct(productDTO);
+
+        // IMPORTANT: Uncomment this entire block for category handling
+        if (productDTO.getCategoryId() != null) {
+            Categories category = categoryRepository.findById(productDTO.getCategoryId())
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found with ID: " + productDTO.getCategoryId()));
+            product.setCategory(category);
+        } else {
+            // Optional: If categoryId is null, decide if you want to set category to null
+            // or if it should be handled as an error (e.g., categories are mandatory)
+            product.setCategory(null);
+        }
+
         Products savedProduct = productRepository.save(product);
         return productMapper.toProductDetailDTO(savedProduct);
     }
@@ -49,8 +59,15 @@ public class ProductService {
         Products product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
-        productMapper.updateProductFromDto(productDTO, product); // Use mapper for updates
-        // Removed category setting logic for simplification
+        productMapper.updateProductFromDto(productDTO, product);
+
+        if (productDTO.getCategoryId() != null) {
+            Categories category = categoryRepository.findById(productDTO.getCategoryId())
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found with ID: " + productDTO.getCategoryId()));
+            product.setCategory(category);
+        } else {
+            product.setCategory(null); // Or keep existing if DTO categoryId is null and you don't want to change it
+        }
 
         Products updatedProduct = productRepository.save(product);
         return productMapper.toProductDetailDTO(updatedProduct);
