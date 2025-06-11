@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "cart_items", schema = "nordicsteps")
+@Table(name = "cart_items", schema = "nordicsteps") // Updated schema
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,11 +22,11 @@ public class CartItems {
     private Long cartItemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cart_id", foreignKey = @ForeignKey(name = "fk_cart_item_cart"))
+    @JoinColumn(name = "cart_id", foreignKey = @ForeignKey(name = "fk_cart_item_cart"), nullable = false) // Added nullable=false
     private Cart cart;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", foreignKey = @ForeignKey(name = "fk_cart_item_product"))
+    @JoinColumn(name = "product_id", foreignKey = @ForeignKey(name = "fk_cart_item_product"), nullable = false) // Added nullable=false
     private Products product;
 
     @Column(length = 10, nullable = false)

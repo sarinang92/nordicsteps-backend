@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList; // Added for list initialization
+import java.util.List;      // Added for List type
 
 @Entity
 @Table(name = "orders", schema = "nordicsteps")
@@ -55,5 +57,22 @@ public class Orders {
     private BigDecimal totalAmount;
 
     @Column(length = 50)
-    private String status;  // choose status from: pending, paid, shipped
+    private String status;
+
+    @Column(name = "payment_method") // Added this as per earlier discussion for consistency
+    private String paymentMethod;
+
+
+    // --- ADD THIS SECTION ---
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItems> orderItems = new ArrayList<>(); // Initialize the list to prevent NullPointerExceptions
+    // --- END ADD SECTION ---
+
+    // You can also add a @PrePersist method if you want to set orderDate automatically on creation
+    @PrePersist
+    protected void onCreate() {
+        if (this.orderDate == null) {
+            this.orderDate = LocalDateTime.now();
+        }
+    }
 }
