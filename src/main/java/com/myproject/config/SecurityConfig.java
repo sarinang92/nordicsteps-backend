@@ -22,12 +22,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf().disable() // Disable CSRF for development/testing (do NOT use in production)
+                .csrf().disable() // Disable CSRF for development/testing
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",          // Allow login/register endpoints
                                 "/api/v1/users/**",      // Allow user-related endpoints
                                 "/swagger-ui/**",        // Allow Swagger UI
+                                "/api/orders/**",
+                                "/api/v1/cart/**",
+                                "/api/v1/products/**",
                                 "/v3/api-docs/**"        // Allow OpenAPI docs
                         ).permitAll()
                         .anyRequest().authenticated() // 🔒 Any other route requires login
