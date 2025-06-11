@@ -71,7 +71,7 @@ public class UserService {
         user.setPostalCode(dto.getPostalCode());
         user.setCountry(dto.getCountry());
 
-        // 🔐 Hash the password
+        // Hash the password
         String hashedPassword = passwordEncoder.encode(dto.getPassword());
         user.setPassword(hashedPassword);
 
@@ -123,5 +123,5 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    // Custom logic can be added here (e.g., search, filter, password reset)
+
 }

@@ -19,12 +19,14 @@ public class AuthController {
 
     private final AuthService authService;
 
+    // Handles user login
     @PostMapping("/login")
     public ResponseEntity<UserLoginResponseDTO> login(@RequestBody LoginRequestDTO request) {
         UserLoginResponseDTO response = authService.login(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(response);
     }
 
+    // Handles password change requests
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody PasswordChangeDTO dto) {
         try {

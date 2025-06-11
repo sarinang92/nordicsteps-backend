@@ -13,6 +13,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class SecurityConfig {
 
+    // This bean handles password encryption using BCrypt, which is a secure way to store passwords
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -24,6 +25,7 @@ public class SecurityConfig {
                 .securityMatcher("/**") // Applies to all endpoints
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                // These endpoints can be accessed by anyone, no login required
                                 "/api/auth/**",
                                 "/api/v1/users/**",
                                 "/swagger-ui/**",
@@ -31,11 +33,12 @@ public class SecurityConfig {
                                 "/api/v1/cart/**",
                                 "/api/v1/products/**",
                                 "/v3/api-docs/**"
+
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated() // Everything else needs the user to be logged in
                 )
-                .csrf(csrf -> csrf.disable())
-                .formLogin(Customizer.withDefaults());
+                .csrf(csrf -> csrf.disable()) // Disables CSRF protection
+                .formLogin(Customizer.withDefaults()); // Enables default login form
 
         return http.build();
     }
@@ -45,9 +48,9 @@ public class SecurityConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOriginPatterns("http://localhost:*")
-                        .allowedMethods("*")
+                registry.addMapping("/**")  // Apply CORS settings to all paths
+                        .allowedOriginPatterns("http://localhost:*") // Allow requests from localhost (any port)
+                        .allowedMethods("*") // Allow all HTTP methods like GET, POST, etc.
                         .allowedHeaders("*");
             }
         };
