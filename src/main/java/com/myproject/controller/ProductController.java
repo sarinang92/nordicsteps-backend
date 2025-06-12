@@ -81,5 +81,24 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    // Add your custom controller endpoints here
+@GetMapping("/search")
+@Operation(summary = "Filter products", description = "Filter and search for products based on query and attributes")
+@ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Products filtered successfully"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+})
+public List<ProductBasicDTO> filterProducts(
+                @RequestParam(required = false) String query,
+                @RequestParam(required = false) Double minPrice,
+                @RequestParam(required = false) Double maxPrice,
+                @RequestParam(required = false) String brand,
+                @RequestParam(required = false) String color,
+                @RequestParam(required = false) String size,
+                @RequestParam(required = false) String campaign,
+                @RequestParam(required = false) String area
+) {
+        return productService.searchAndFilter(
+                        query, minPrice, maxPrice, brand, color, size, campaign, area
+        );
+}
 }

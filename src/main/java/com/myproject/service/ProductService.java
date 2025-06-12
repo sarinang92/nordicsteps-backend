@@ -12,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -80,4 +82,24 @@ public class ProductService {
         }
         productRepository.deleteById(id);
     }
+
+    // Additional methods can be added here as needed
+    public List<ProductBasicDTO> searchAndFilter(String query, Double minPrice, Double maxPrice,
+                                                 String brand, String color, String size,
+                                                 String campaign, String area) {
+        List<Products> allProducts = productRepository.findAll();
+
+        return allProducts.stream()
+                .filter(p -> query == null || p.getName().toLowerCase().contains(query.toLowerCase()))
+                .filter(p -> minPrice == null || p.getPrice().compareTo(BigDecimal.valueOf(minPrice)) >= 0)
+                .filter(p -> maxPrice == null || p.getPrice().compareTo(BigDecimal.valueOf(maxPrice)) <= 0)
+                .filter(p -> brand == null || brand.isBlank() || p.getBrand().equalsIgnoreCase(brand))
+                .filter(p -> color == null || color.isBlank() || p.getColor().equalsIgnoreCase(color))
+                .filter(p -> size == null || size.isBlank() || String.valueOf(p.getSize()).equals(size))
+                .filter(p -> campaign == null || campaign.isBlank() || p.getCampaign().equalsIgnoreCase(campaign))
+                .filter(p -> area == null || area.isBlank() || p.getArea().equalsIgnoreCase(area))
+                .map(productMapper::toProductBasicDTO)
+                .collect(Collectors.toList());
+    }
+
 }

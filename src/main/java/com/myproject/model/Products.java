@@ -69,6 +69,15 @@ public class Products {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt; // Added field
 
+    @Column(length = 50) // Added field for size
+    private String size;
+
+    @Column(length = 100) // Added field for campaign
+    private String campaign;
+
+    @Column(length = 100) // Added field for area
+    private String area; 
+
     @PrePersist // Set createdAt when entity is first persisted
     protected void onCreate() {
         if (createdAt == null) {
