@@ -74,3 +74,60 @@ src/main/java/com/myproject/
 ```
 
 ## API Endpoints
+
+The backend follows RESTful conventions and is organized into resources like users, products, cart, orders, and authentication.
+
+### User
+
+- `GET /api/v1/users` — Retrieve all users  
+- `GET /api/v1/users/{id}` — Retrieve a user by ID  
+- `POST /api/v1/users/register` — Register a new user  
+- `PUT /api/v1/users/{id}` — Update a user  
+- `DELETE /api/v1/users/{id}` — Delete a user  
+
+### Products
+
+- `GET /api/v1/products` — Retrieve all products  
+- `GET /api/v1/products/{id}` — Retrieve a product by ID  
+- `GET /api/v1/products/search` — Filter products by color, size, brand, campaign, etc.  
+- `POST /api/v1/products` — Create a new product  
+- `PUT /api/v1/products/{id}` — Update a product  
+- `DELETE /api/v1/products/{id}` — Delete a product  
+
+### Cart
+
+- `GET /api/v1/cart/items` — Retrieve all cart items  
+- `GET /api/v1/cart/items/{id}` — Retrieve a specific cart item  
+- `POST /api/v1/cart/items` — Add an item to the cart  
+- `PUT /api/v1/cart/items/{id}` — Update an item's quantity  
+- `DELETE /api/v1/cart/items/{id}` — Remove an item from the cart  
+- `DELETE /api/v1/cart/clear` — Clear the current user's cart  
+
+### Order
+
+- `GET /api/orders/{orderId}` — Retrieve an order by ID  
+- `GET /api/orders/user/{userId}` — Retrieve all orders for a user  
+- `POST /api/orders/checkout/{userId}` — Place a new order  
+- `PATCH /api/orders/{orderId}/status` — Update an order's status 
+
+### Authentication
+
+- `POST /api/auth/login` — Log in a user  
+- `POST /api/auth/change-password` — Change the user's password  
+
+
+## Test Coverage Report
+
+We used JaCoCo (Java Code Coverage) to measure how much of the backend code is covered by tests.
+* The full HTML report is located at: `target/site/jacoco/index.html`
+
+| Package                    | Coverage |
+| -------------------------- | -------- |
+| `com.myproject.config`     | 74%      |
+| `com.myproject.service`    | 8%       |
+| `com.myproject.model`      | 7%       |
+| `com.myproject.controller` | 14%      |
+| `com.myproject.exception`  | 21%      |
+| `com.myproject.mapper`     | 1%       |
+| `com.myproject.dto`        | 0%       |
+| **Overall**                | **4%**   |
