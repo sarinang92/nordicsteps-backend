@@ -60,6 +60,8 @@ The backend supports:
 * Swagger-based API documentation
 
 ## Project Structure
+
+```
 src/main/java/com/myproject/
 ├── config/         # Security and app configuration
 ├── controller/     # REST API endpoints
@@ -69,5 +71,6 @@ src/main/java/com/myproject/
 ├── repository/     # JPA repositories
 ├── service/        # Business logic
 └── exception/      # Global exception handling
+```
 
 ## API Endpoints
